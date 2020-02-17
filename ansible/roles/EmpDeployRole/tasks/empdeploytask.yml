@@ -1,0 +1,134 @@
+---
+- name: check if C drive exists on the server or not
+  win_stat:
+    path: "{{dir}}"
+    register: check_drive
+ 
+- name: check data folder exists or not
+  win_stat: 
+    path: "{{dir}}\\data"
+    register: folder_info            
+ 
+- name: create a data folder if it does not exists
+  win_file:
+    path: "{{dir}}\\data"
+    state: "directory"
+    when: folder_info.stat.exists == False
+ 
+- name: check artifact folder exists or not
+  win_stat:
+    path: "{{ Artifact_Location }}"
+    register: artifact_folder_info
+
+
+
+ 
+- name: Create an artifact directory for downloading build files
+  win_file:
+    path: "{{ Artifact_Location }}"
+    state: "directory"
+    when: artifact_folder_info.stat.exists == False
+ 
+- name: Grant read and execute permissions
+  win_acl:
+    user: Users
+    path: "{{ Artifact_Location }}"
+    type: allow
+    rights: ReadAndExecute
+    state: present
+    inherit: ContainerInherit,ObjectInherit
+ 
+- name: unzip the deployed folder and delete the zip file
+  win_unzip:
+    src: "{{ Artifact_Location }}/EmpmgmtDeploy.zip"
+    dest: "{{ EmpmgmtSvc_Artifact_Location }}"
+    remote_src: yes
+    delete_archive: yes
+
+#- name: installing IIS server
+ # win_feature:
+  #  name: "web-server"
+   # state: present
+    #restart: yes
+    #include_sub_features: yes
+    #include_management_tools: no
+  
+    
+ 
+- name: Displaying Debugging information of folder paths.
+  debug:
+    msg: "Trying to move the artifact from {{ EmpmgmtSvc_Artifact_Location }} to {{ EmpmgmtService_DeploymentPath }}"
+
+
+ 
+- name: Move the unzipped aritifact to {{ EmpmgmtService_DeploymentPath }} folder
+  win_copy:
+    src: "{{ EmpmgmtSvc_Artifact_Location }}\\"
+    dest: "{{ EmpmgmtService_DeploymentPath }}\\"
+    remote_src: true
+
+
+ 
+- name: Get "{{ EmpmgmtService_SITENAME }}" app pool information.
+  win_iis_webapppool:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    register: apppool_info
+ 
+- name: Stopping "{{ EmpmgmtService_SITENAME }}" app pool.
+  win_iis_webapppool:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    state: stopped
+    when: apppool_info.state == started
+ 
+- name: Removing "{{ EmpmgmtService_SITENAME }}" app pool.
+  win_iis_webapppool:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    state: absent
+    when: apppool_info.state == present
+
+
+ 
+- name: "Create {{ EmpmgmtService_SITENAME }} application pool"
+  win_iis_webapppool:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    state: started
+    attributes:
+      managedRuntimeVersion: v4.0
+      managedPipelineMode: Integrated
+      processModel.identityType: ApplicationPoolIdentity
+      enable32BitAppOnWin64: false
+      failure.rapidFailProtection: true
+     # recycling.periodicRestart.time: "00:00:00"
+     # recycling.periodicRestart.schedule: ["04:00:00"]
+     # recycling.logEventOnRecycle: ConfigChange,OnDemand,IsapiUnhealthy,Memory,PrivateMemory,Requests,Schedule,Time
+      processmodel.idleTimeout: 00:00:00
+     # processmodel.idleTimeoutAction: Suspend
+     # startMode: AlwaysRunning
+
+
+ 
+- name: Get "{{ EmpmgmtService_SITENAME }}" Website information.
+  win_iis_website:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    physical_path: "{{ EmpmgmtService_DeploymentPath }}"
+    register: website_info
+ 
+- name: Stopping "{{ EmpmgmtService_SITENAME }}" Website.
+  win_iis_website:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    physical_path: "{{ EmpmgmtService_DeploymentPath }}"
+    state: stopped
+    when: website_info.state == started
+ 
+- name: Removing "{{ EmpmgmtService_SITENAME }}" Website.
+  win_iis_website:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    state: absent
+ 
+- name: "Create {{ EmpmgmtService_SITENAME }} website"
+  win_iis_website:
+    name: "{{ EmpmgmtService_SITENAME }}"
+    state: started
+    port: "{{ EmpmgmtService_PORT }}"
+    application_pool: "{{ EmpmgmtService_SITENAME }}"
+    physical_path: "{{ EmpmgmtService_DeploymentPath }}"

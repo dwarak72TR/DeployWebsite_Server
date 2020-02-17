@@ -1,0 +1,9 @@
+--- 
+- name: "EmpDeploy"
+  hosts: winhost
+  gather_facts: true
+
+  tasks:
+    - name: "Deploying emp mgmt Module."
+      include_role:
+        name: EmpDeployRole

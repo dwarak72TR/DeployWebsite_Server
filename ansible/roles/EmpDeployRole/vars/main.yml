@@ -1,0 +1,10 @@
+dir: "C:"
+ 
+Artifact_Location: '{{ dir }}\\Artifacts\\'
+EmpmgmtSvc_Artifact_Location: '{{ dir }}\\Artifacts\\EmpmgmtSvc\\'
+
+
+ 
+EmpmgmtService_PORT: "8121"
+EmpmgmtService_SITENAME: "Empmgmtservice"
+EmpmgmtService_DeploymentPath: '{{ dir }}\\data\\{{ EmpmgmtService_SITENAME }}\\'
