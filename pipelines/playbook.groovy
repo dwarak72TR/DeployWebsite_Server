@@ -1,0 +1,1 @@
+ansible --module-name ping --extra-vars 'ansible_user=domain\user ansible_password=PASSWORD' --inventory 10.10.6.184, all
