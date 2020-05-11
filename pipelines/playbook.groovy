@@ -7,7 +7,7 @@ timestamps
     node(buildAgent)
     {  
         stage('Select Env And Invoke Playbook')
-        {  if(environment.contains('dev'))
+        {  if(environment.contains('dev') || environment.contains('qa') )
              {  ipdd = "192.168.0.28"
                 sh 'echo "$environment"'
              }
