@@ -23,11 +23,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       
-      - name: Print secret values
-        run: |
-            print(${{ secrets.AWS_CREDENTIALS }})
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
          pip3 install boto3
-         python test.py ${{ secrets.AWS_CREDENTIALS }}
+         python test.py "${{ secrets.AWS_CREDENTIALS }}"
