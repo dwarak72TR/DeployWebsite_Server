@@ -1,6 +1,6 @@
 import configparser,sys
 
-secret = sys.argv[0]
+secret = sys.argv[1]
 parser = configparser.ConfigParser()
 parser.read(secret)
 
